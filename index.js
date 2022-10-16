@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId, ObjectID} = require('mongodb');
 require('dotenv').config();
 const port = process.env.PORT || 5000;
 const app = express();
@@ -19,14 +19,12 @@ const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster
 
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
-console.log(uri);
-console.log('db connect');
-
 
 async function run() {
     try {
         await client.connect()
         const girlsDressCollection = client.db('fasionHolesales').collection('girlsDress');
+        const orderDressCollection = client.db('fasionHolesales').collection('orderDress');
 
         app.get('/girlsdress', async (req, res) => {
             const query = {};
@@ -41,6 +39,34 @@ async function run() {
             const dress = await girlsDressCollection.findOne(query);
             res.send(dress);
         })
+        //////////////////////////////////////////////////////////////order/////////////////////////
+
+
+        app.post('/order', async (req, res) => {
+            const order = req.body;
+            const result = await orderDressCollection.insertOne(order);
+            res.send(result);
+        })
+        
+
+
+
+        app.get('/order', async (req, res) => {
+
+            const email = req.query.email;
+            const query = { email: email };
+            const order = await orderDressCollection.find(query).toArray();
+            res.send(order)
+        })
+
+        // app.get('/booking/:id', async (req, res) => {
+
+        //     const id = req.params.id;
+        //     const query = { _id: ObjectId(id) };
+        //     const booking = await bookingCollection.findOne(query);
+        //     res.send(booking)
+        //   })
+       
 
 
     }
