@@ -4,7 +4,7 @@ const { MongoClient, ServerApiVersion, ObjectId, ObjectID} = require('mongodb');
 require('dotenv').config();
 const port = process.env.PORT || 5000;
 const app = express();
-
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 
 
@@ -25,6 +25,7 @@ async function run() {
         await client.connect()
         const girlsDressCollection = client.db('fasionHolesales').collection('girlsDress');
         const orderDressCollection = client.db('fasionHolesales').collection('orderDress');
+        const paymentDressCollection = client.db('fasionHolesales').collection('payments');
 
         app.get('/girlsdress', async (req, res) => {
             const query = {};
@@ -66,7 +67,55 @@ async function run() {
         //     const booking = await bookingCollection.findOne(query);
         //     res.send(booking)
         //   })
-       
+        app.delete('/order/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const order = await orderDressCollection.deleteOne(query);
+            res.send(order)
+        })
+
+
+        app.get('/order/:id', async(req,res)=>{
+            const id=req.params.id;
+            const query={_id: ObjectId(id)};
+            const order=await orderDressCollection.findOne(query)
+            res.send(order)
+        })
+
+         app.patch('/order/:id', async(req, res)=>{
+             const id=req.params.id;
+             const payment=req.body;
+             const filter={_id: ObjectId(id)};
+             const updatedDoc={
+                 $set:{
+                     paid:true,
+                     transactionId:payment.transactionId
+                 }
+
+             }
+
+             const result= await paymentDressCollection.insertOne (payment)
+             const updatedOrder= await orderDressCollection.updateOne(filter, updatedDoc ) 
+             res.send(updatedDoc)
+         })
+
+        // payment system
+        app.post("/create-payment-intent", async (req, res) => {
+            const order = req.body;
+            const totalAmount = order.totalAmount;
+            const amount = totalAmount * 100;
+            console.log(amount);
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: amount,
+                currency: "usd",
+                payment_method_types: ["card"],
+            });
+            res.send({ clientSecret: paymentIntent.client_secret });
+
+        });
+
+
+
 
 
     }
