@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const { MongoClient, ServerApiVersion, ObjectId, ObjectID} = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId, ObjectID } = require('mongodb');
 require('dotenv').config();
 const port = process.env.PORT || 5000;
 const app = express();
@@ -26,6 +26,7 @@ async function run() {
         const girlsDressCollection = client.db('fasionHolesales').collection('girlsDress');
         const orderDressCollection = client.db('fasionHolesales').collection('orderDress');
         const paymentDressCollection = client.db('fasionHolesales').collection('payments');
+        const reviewCollection = client.db('fasionHolesales').collection('reviews');
 
         app.get('/girlsdress', async (req, res) => {
             const query = {};
@@ -48,7 +49,7 @@ async function run() {
             const result = await orderDressCollection.insertOne(order);
             res.send(result);
         })
-        
+
 
 
 
@@ -75,29 +76,29 @@ async function run() {
         })
 
 
-        app.get('/order/:id', async(req,res)=>{
-            const id=req.params.id;
-            const query={_id: ObjectId(id)};
-            const order=await orderDressCollection.findOne(query)
+        app.get('/order/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const order = await orderDressCollection.findOne(query)
             res.send(order)
         })
 
-         app.patch('/order/:id', async(req, res)=>{
-             const id=req.params.id;
-             const payment=req.body;
-             const filter={_id: ObjectId(id)};
-             const updatedDoc={
-                 $set:{
-                     paid:true,
-                     transactionId:payment.transactionId
-                 }
+        app.patch('/order/:id', async (req, res) => {
+            const id = req.params.id;
+            const payment = req.body;
+            const filter = { _id: ObjectId(id) };
+            const updatedDoc = {
+                $set: {
+                    paid: true,
+                    transactionId: payment.transactionId
+                }
 
-             }
+            }
 
-             const result= await paymentDressCollection.insertOne (payment)
-             const updatedOrder= await orderDressCollection.updateOne(filter, updatedDoc ) 
-             res.send(updatedDoc)
-         })
+            const result = await paymentDressCollection.insertOne(payment)
+            const updatedOrder = await orderDressCollection.updateOne(filter, updatedDoc)
+            res.send(updatedDoc)
+        })
 
         // payment system
         app.post("/create-payment-intent", async (req, res) => {
@@ -114,9 +115,13 @@ async function run() {
 
         });
 
+        ////////////////////////////////////////// reviews/////////////////////////////////////////////////
 
-
-
+        app.post('/review', async (req, res) => {
+            const newReview = req.body;
+            const result = await reviewCollection.insertOne(newReview);
+            res.send(result)
+        })
 
     }
 
